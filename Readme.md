@@ -1,4 +1,5 @@
-# Blur Detection Report
+# Blur Detection 
+Code - https://colab.research.google.com/drive/19ZFVE0RuJ4wJ5u14tEQyC2HDk3Nv32Z8?usp=sharing
 
 ## Scope
 Given an image, detect whether it is **blurred** or **sharp** using multiple approaches. 
