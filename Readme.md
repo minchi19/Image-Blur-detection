@@ -14,6 +14,7 @@ The objective is to analyze different blur detection techniques, compare their p
 - Occurs due to the movement of the camera or object during exposure.
 - Example: Streaking effects in fast-moving scenes.
 
+
 ## Dataset & Preprocessing
 - **Dataset Location:** `/content/drive/My Drive/blur_data`
 - **Categories:** `Blurred` and `Sharp`
@@ -25,11 +26,13 @@ The objective is to analyze different blur detection techniques, compare their p
   - Data augmentation applied (if applicable).
 
 ## Experiments & Analysis
+### Evaluation Metrics?
+Since blur detection is a binary classification task, the F1 score is preferred over accuracy, since the dataset is imbalanced.
 
 ### **Experiment 1: Laplacian Variance (Baseline Model)**
 #### **Approach:**
-- Compute the **variance of the Laplacian** of the image.
-- If the variance is below a set threshold, classify it as blurred.
+- Compute the **variance of the Laplacian**  (second derivative) of an image.
+- If the variance is below a set threshold (variance < 100), classify it as blurred.
 
 #### **Results:**
 - **Threshold:** 100
@@ -86,11 +89,13 @@ The objective is to analyze different blur detection techniques, compare their p
   ```
 #### **Inference:**
 - High false positive rate.
-- Threshold too high, making the model unreliable.
-
+- The threshold is too high, making the model unreliable.
+  **Why this was discarded?**
+- Overly high threshold misclassifies most sharp images as blurred.
 ---
 
-### **Experiment 4: Fourier Transform Method**
+### **Experiment 4: Fourier Transform Method (Frequency Analysis)
+**
 #### **Planned Approach:**
 - Frequency domain analysis to detect blur based on edge loss.
 
@@ -99,12 +104,24 @@ The objective is to analyze different blur detection techniques, compare their p
 ### **Experiment 5.1: CNN from Scratch**
 #### **Approach:**
 - Built a **custom CNN** model trained on the dataset.
-- 4-layer CNN with:
+### Steps:
+1. **Dataset Preparation:**
+   - Used ImageDataGenerator for augmentation (rotation, flipping, brightness changes).
+   - Train-validation-test split: **2753-590-590**.
 
--- Conv2D + ReLU (Feature extraction)
--- MaxPooling (Downsampling)
--- Flatten + Dense (Final classification)
---
+2. **Model Architecture:**
+   - Convolutional layers with ReLU activation. Conv2D + ReLU (Feature extraction)
+   - Max pooling for feature extraction.
+   - Fully connected dense layers with dropout.
+   - Softmax activation for classification.
+
+3. **Loss Function & Optimizer:**
+   - Loss: **Categorical Crossentropy**
+   - Optimizer: **Adam (learning rate = 1e-3)**
+
+4. **Evaluation:**
+- **Accuracy:** 0.82  
+- **F1-score:** 0.82  
 
 #### **Results:**
 ```
@@ -123,34 +140,71 @@ weighted avg       0.82      0.82      0.82       613
 
 ---
 
-### **Experiment 5.2: Transfer Learning (Ongoing)**
+### **Experiment 5.2: Transfer Learning**
 #### **Approach:**
 - Fine-tuned a **pretrained MobileNetV2 model** for blur classification.
+**Why MobileNetV2?**
+- Lightweight model designed for mobile and edge applications.
+- Pretrained on ImageNet for feature extraction.
+
+###  Steps:
+1. **Load MobileNetV2 without top layers.**
+2. **Freeze base model layers to retain pre-trained features.**
+3. **Add a custom classifier:**
+   - Global Average Pooling layer
+   - Fully connected dense layers
+   - Softmax output layer
+4. **Train model with fine-tuning:**
+   - First phase: Train top layers only.
+   - Second phase: Unfreeze the last 10 layers for fine-tuning with a lower learning rate.
+
+### Results:
+- **Accuracy:** 0.86  
+- **F1-score:** 0.86  
+
+ **Key Takeaway:**
+- Performs better than CNN from scratch.
+- Generalizes well despite fewer training images.
+
 - 
 
-## Summary of Results
+## **Summary Table**
 | Experiment | Accuracy | Precision | Recall | F1-score |
-|------------|----------|-----------|--------|----------|
-| Laplacian Variance (Baseline) | 0.74 | 0.65 | 0.85 | 0.74 |
+|------------|----------|----------|--------|----------|
+| Laplacian Variance | 0.74 | 0.65 | 0.85 | 0.74 |
 | Optimized Threshold | 0.76 | 0.70 | 0.79 | 0.74 |
-| GMM (Discarded) | 0.53 | 0.48 | 0.98 | 0.65 |
-| CNN from Scratch 4 Layers| 0.82 | 0.83 | 0.82 | 0.82 |
-| Transfer Learning Using MobileNetV2| *Training in Progress* | *TBD* | *TBD* | *TBD* |
+| GMM | 0.53 | 0.48 | 0.98 | 0.65 |
+| CNN from Scratch | 0.82 | 0.82 | 0.82 | 0.82 |
+| MobileNetV2 | 0.86 | 0.86 | 0.86 | 0.86 |
 
+---
 ## Challenges Faced
 - **High runtime memory usage:** Initially caused crashes in Google Colab.
 - **Class imbalance:** Some methods had a high false positive rate.
 - **Choosing the right threshold:** Required optimization.
 - **Motion vs. Defocus Blur:** Some methods failed to differentiate between these.
 
-## Next Steps
-- Explore real-time blur detection applications.
-- Investigate object-aware blur detection for more granular insights.
+## **Next Steps & Improvements**
+1. **Try Different Models:**
+   - Train **ResNet50** or **EfficientNet** to compare results.
+   
+2. **Increase Training Time:**
+   - Train CNN for **more epochs** to improve learning.
+
+3. **Improve Augmentation:**
+   - Use stronger augmentation techniques (Gaussian noise, motion blur simulation).
+
+4. **Experiment with New Loss Functions:**
+   - Try **Focal Loss** to handle class imbalance.
+
 
 ## References
 - https://pyimagesearch.com/2015/09/07/blur-detection-with-opencv/
 - https://github.com/Utkarsh-Deshmukh/Spatially-Varying-Blur-Detection-python
 ---
 **Conclusion:** This study explores multiple methods for blur detection, highlighting their strengths and weaknesses. 
-The CNN and Transfer Learning approaches are expected to outperform traditional threshold-based techniques.
+From simple thresholding methods to deep learning, we explored multiple approaches for blur detection. 
+While MobileNetV2 performed the best, future improvements can enhance robustness.
+
+---
 
